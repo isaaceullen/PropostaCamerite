@@ -27,6 +27,7 @@ export const generateProposalPDF = async (
   settings: ProposalSettings
 ): Promise<Uint8Array> => {
   const doc = await PDFDocument.load(basePdfBuffer);
+  const templateDoc = await PDFDocument.load(basePdfBuffer);
   
   const helveticaFont = await doc.embedFont(StandardFonts.Helvetica);
   const helveticaBold = await doc.embedFont(StandardFonts.HelveticaBold);
@@ -117,7 +118,8 @@ export const generateProposalPDF = async (
 
   const checkPageBreak = async (requiredSpace: number, isTable: boolean = false) => {
     if (currentY - requiredSpace < marginBottom) {
-      const [copiedPage] = await doc.copyPages(doc, [lastPageIndex]);
+      const templatePageIndex = templateDoc.getPageCount() - 1;
+      const [copiedPage] = await doc.copyPages(templateDoc, [templatePageIndex]);
       doc.addPage(copiedPage);
       currentPage = doc.getPages()[doc.getPages().length - 1];
       currentY = marginTop;
