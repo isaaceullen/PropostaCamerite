@@ -63,9 +63,6 @@ export const generateProposalPDF = async (
   const startY = height - 120; // Adjust based on header size of base PDF
   const safeBottomY = 100; // Margin bottom
   let currentY = startY;
-  
-  const clearRectY = 35;
-  const clearRectHeight = startY - clearRectY + 20;
 
   const drawText = (text: string, font: PDFFont, size: number, color: any, x: number, y: number, align: 'left' | 'center' | 'right' = 'left') => {
     let textWidth = font.widthOfTextAtSize(text, size);
@@ -82,29 +79,11 @@ export const generateProposalPDF = async (
     if (currentY - requiredSpace < safeBottomY) {
       const [copiedPage] = await pdfDoc.copyPages(pdfDoc, [templatePageIndex]);
       
-      // Clear the content area of the copied page to draw new content
-      copiedPage.drawRectangle({
-        x: marginX - 10,
-        y: clearRectY,
-        width: width - 2 * marginX + 20,
-        height: clearRectHeight,
-        color: rgb(1, 1, 1),
-      });
-      
       pdfDoc.addPage(copiedPage);
       currentPage = copiedPage;
       currentY = startY;
     }
   };
-
-  // Clear the content area of the first page we are drawing on
-  currentPage.drawRectangle({
-    x: marginX - 10,
-    y: clearRectY,
-    width: width - 2 * marginX + 20,
-    height: clearRectHeight,
-    color: rgb(1, 1, 1),
-  });
 
   // 1. CABEÇALHO DO DESTINATÁRIO
   const textColor = rgb(0, 0, 0);
@@ -181,17 +160,6 @@ export const generateProposalPDF = async (
     const itemHeight = Math.max(20, lines.length * 12 + 8);
     
     await checkPageBreak(itemHeight);
-
-    // Zebra background
-    if (i % 2 !== 0) {
-      currentPage.drawRectangle({
-        x: marginX,
-        y: currentY - itemHeight + 5,
-        width: tableWidth,
-        height: itemHeight,
-        color: hexToRgb('#F9F9F9'),
-      });
-    }
 
     // Bottom border
     currentPage.drawLine({
