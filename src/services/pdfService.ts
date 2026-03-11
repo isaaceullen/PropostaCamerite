@@ -60,9 +60,9 @@ export const generateProposalPDF = async (
   const { width, height } = currentPage.getSize();
 
   const marginX = 50;
-  const startY = height - 120; // Adjust based on header size of base PDF
-  const safeBottomY = 100; // Margin bottom
-  let currentY = startY;
+  const marginTop = height - 150; // Margem superior padrão
+  const marginBottom = 100; // Margem inferior segura
+  let currentY = marginTop;
 
   const drawText = (text: string, font: PDFFont, size: number, color: any, x: number, y: number, align: 'left' | 'center' | 'right' = 'left') => {
     let textWidth = font.widthOfTextAtSize(text, size);
@@ -74,25 +74,6 @@ export const generateProposalPDF = async (
     }
     currentPage.drawText(text, { x: drawX, y, font, size, color });
   };
-
-  const checkPageBreak = async (requiredSpace: number) => {
-    if (currentY - requiredSpace < safeBottomY) {
-      const [copiedPage] = await pdfDoc.copyPages(pdfDoc, [templatePageIndex]);
-      
-      pdfDoc.addPage(copiedPage);
-      currentPage = copiedPage;
-      currentY = startY;
-    }
-  };
-
-  // 1. CABEÇALHO DO DESTINATÁRIO
-  const textColor = rgb(0, 0, 0);
-  drawText(`À ${settings.recipientName || ''}`, helveticaFont, 11, textColor, marginX, currentY);
-  currentY -= 15;
-  drawText(`CNPJ/MF: ${settings.cnpj || ''}`, helveticaFont, 11, textColor, marginX, currentY);
-  currentY -= 15;
-  drawText(`Endereço: ${settings.address || ''}`, helveticaFont, 11, textColor, marginX, currentY);
-  currentY -= 30; // Spacing before table
 
   // 2. ESTRUTURA E LARGURA DAS COLUNAS DA TABELA
   const tableWidth = width - 2 * marginX;
@@ -112,28 +93,53 @@ export const generateProposalPDF = async (
     marginX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]
   ];
 
-  // 3. CABEÇALHO DA TABELA
   const headerHeight = 20;
-  await checkPageBreak(headerHeight);
-  
   const primaryColor = hexToRgb('#7B48EA');
-  
-  currentPage.drawRectangle({
-    x: marginX,
-    y: currentY - headerHeight + 5,
-    width: tableWidth,
-    height: headerHeight,
-    color: primaryColor,
-  });
 
-  const headerY = currentY - 10;
-  drawText("Item", helveticaBold, 10, rgb(1,1,1), colX[0] + 5, headerY);
-  drawText("Qtd.", helveticaBold, 10, rgb(1,1,1), colX[1] + colWidths[1]/2, headerY, 'center');
-  drawText("Unitário", helveticaBold, 10, rgb(1,1,1), colX[2] + colWidths[2] - 5, headerY, 'right');
-  drawText("Mensal", helveticaBold, 10, rgb(1,1,1), colX[3] + colWidths[3] - 5, headerY, 'right');
-  drawText("Anual", helveticaBold, 10, rgb(1,1,1), colX[4] + colWidths[4] - 5, headerY, 'right');
+  const drawTableHeader = () => {
+    currentPage.drawRectangle({
+      x: marginX,
+      y: currentY - headerHeight + 5,
+      width: tableWidth,
+      height: headerHeight,
+      color: primaryColor,
+    });
 
-  currentY -= headerHeight;
+    const headerY = currentY - 10;
+    drawText("Item", helveticaBold, 10, rgb(1,1,1), colX[0] + 5, headerY);
+    drawText("Qtd.", helveticaBold, 10, rgb(1,1,1), colX[1] + colWidths[1]/2, headerY, 'center');
+    drawText("Unitário", helveticaBold, 10, rgb(1,1,1), colX[2] + colWidths[2] - 5, headerY, 'right');
+    drawText("Mensal", helveticaBold, 10, rgb(1,1,1), colX[3] + colWidths[3] - 5, headerY, 'right');
+    drawText("Anual", helveticaBold, 10, rgb(1,1,1), colX[4] + colWidths[4] - 5, headerY, 'right');
+
+    currentY -= headerHeight;
+  };
+
+  const checkPageBreak = async (requiredSpace: number, isTable: boolean = false) => {
+    if (currentY - requiredSpace < marginBottom) {
+      const [copiedPage] = await pdfDoc.copyPages(pdfDoc, [templatePageIndex]);
+      pdfDoc.addPage(copiedPage);
+      currentPage = copiedPage;
+      currentY = marginTop;
+      
+      if (isTable) {
+        drawTableHeader();
+      }
+    }
+  };
+
+  // 1. CABEÇALHO DO DESTINATÁRIO
+  const textColor = rgb(0, 0, 0);
+  drawText(`À ${settings.recipientName || ''}`, helveticaFont, 11, textColor, marginX, currentY);
+  currentY -= 15;
+  drawText(`CNPJ/MF: ${settings.cnpj || ''}`, helveticaFont, 11, textColor, marginX, currentY);
+  currentY -= 15;
+  drawText(`Endereço: ${settings.address || ''}`, helveticaFont, 11, textColor, marginX, currentY);
+  currentY -= 30; // Spacing before table
+
+  // 3. CABEÇALHO DA TABELA (Página 1)
+  await checkPageBreak(headerHeight, false);
+  drawTableHeader();
 
   // 4. LINHAS DA TABELA (ITENS)
   for (let i = 0; i < selectedItems.length; i++) {
@@ -159,7 +165,7 @@ export const generateProposalPDF = async (
 
     const itemHeight = Math.max(20, lines.length * 12 + 8);
     
-    await checkPageBreak(itemHeight);
+    await checkPageBreak(itemHeight, true);
 
     // Bottom border
     currentPage.drawLine({
