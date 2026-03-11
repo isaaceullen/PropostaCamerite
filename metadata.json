@@ -1,0 +1,5 @@
+{
+  "name": "Gerador de Orçamentos",
+  "description": "Aplicativo para gerar orçamentos em PDF com base em um template.",
+  "requestFramePermissions": []
+}
