@@ -26,7 +26,8 @@ export const generateProposalPDF = async (
   colors: ColorSettings,
   settings: ProposalSettings
 ): Promise<Uint8Array> => {
-  const pdfDoc = await PDFDocument.load(basePdfBuffer);
+  const basePdf = await PDFDocument.load(basePdfBuffer);
+  const pdfDoc = await PDFDocument.create();
   
   const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -54,9 +55,11 @@ export const generateProposalPDF = async (
 
   const totalAnualGeral = (totalMensal * 12) + totalImplantacao + totalRealocacoes + totalTreinamento;
 
-  const pages = pdfDoc.getPages();
-  const templatePageIndex = pages.length - 1;
-  let currentPage = pages[templatePageIndex];
+  const templatePageIndex = basePdf.getPageCount() - 1;
+  const [firstCopiedPage] = await pdfDoc.copyPages(basePdf, [templatePageIndex]);
+  pdfDoc.addPage(firstCopiedPage);
+
+  let currentPage = pdfDoc.getPages()[0];
   const { width, height } = currentPage.getSize();
 
   const marginX = 50;
@@ -117,9 +120,9 @@ export const generateProposalPDF = async (
 
   const checkPageBreak = async (requiredSpace: number, isTable: boolean = false) => {
     if (currentY - requiredSpace < marginBottom) {
-      const [copiedPage] = await pdfDoc.copyPages(pdfDoc, [templatePageIndex]);
+      const [copiedPage] = await pdfDoc.copyPages(basePdf, [templatePageIndex]);
       pdfDoc.addPage(copiedPage);
-      currentPage = copiedPage;
+      currentPage = pdfDoc.getPages()[pdfDoc.getPages().length - 1];
       currentY = marginTop;
       
       if (isTable) {
