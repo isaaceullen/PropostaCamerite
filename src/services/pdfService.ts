@@ -26,11 +26,10 @@ export const generateProposalPDF = async (
   colors: ColorSettings,
   settings: ProposalSettings
 ): Promise<Uint8Array> => {
-  const basePdf = await PDFDocument.load(basePdfBuffer);
-  const pdfDoc = await PDFDocument.create();
+  const doc = await PDFDocument.load(basePdfBuffer);
   
-  const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const helveticaFont = await doc.embedFont(StandardFonts.Helvetica);
+  const helveticaBold = await doc.embedFont(StandardFonts.HelveticaBold);
 
   const selectedItems = items.filter(i => i.quantity > 0);
 
@@ -55,11 +54,9 @@ export const generateProposalPDF = async (
 
   const totalAnualGeral = (totalMensal * 12) + totalImplantacao + totalRealocacoes + totalTreinamento;
 
-  const templatePageIndex = basePdf.getPageCount() - 1;
-  const [firstCopiedPage] = await pdfDoc.copyPages(basePdf, [templatePageIndex]);
-  pdfDoc.addPage(firstCopiedPage);
-
-  let currentPage = pdfDoc.getPages()[0];
+  const pages = doc.getPages();
+  const lastPageIndex = pages.length - 1;
+  let currentPage = pages[lastPageIndex];
   const { width, height } = currentPage.getSize();
 
   const marginX = 50;
@@ -120,9 +117,9 @@ export const generateProposalPDF = async (
 
   const checkPageBreak = async (requiredSpace: number, isTable: boolean = false) => {
     if (currentY - requiredSpace < marginBottom) {
-      const [copiedPage] = await pdfDoc.copyPages(basePdf, [templatePageIndex]);
-      pdfDoc.addPage(copiedPage);
-      currentPage = pdfDoc.getPages()[pdfDoc.getPages().length - 1];
+      const [copiedPage] = await doc.copyPages(doc, [lastPageIndex]);
+      doc.addPage(copiedPage);
+      currentPage = doc.getPages()[doc.getPages().length - 1];
       currentY = marginTop;
       
       if (isTable) {
@@ -296,6 +293,6 @@ export const generateProposalPDF = async (
   currentY -= 15;
   drawText("CNPJ: 14.656.882/0001-04", helveticaFont, 10, rgb(0,0,0), width / 2, currentY, 'center');
 
-  return await pdfDoc.save();
+  return await doc.save();
 };
 
