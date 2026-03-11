@@ -61,7 +61,7 @@ export const generateProposalPDF = async (
   const { width, height } = currentPage.getSize();
 
   const marginX = 50;
-  const marginTop = height - 150; // Margem superior padrão
+  const marginTop = height - 100; // Margem superior padrão
   const marginBottom = 100; // Margem inferior segura
   let currentY = marginTop;
 
