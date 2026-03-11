@@ -25,7 +25,6 @@ const ItemTable: React.FC<ItemTableProps> = ({ items, onUpdateItem }) => {
 
   const REALOCACAO_IDS = [26, 27, 28];
   const TREINAMENTO_ID = 25;
-  const LICENCA_ID = 22;
 
   const totalMensal = items
     .filter(i => i.type === 'mensal')
@@ -76,7 +75,6 @@ const ItemTable: React.FC<ItemTableProps> = ({ items, onUpdateItem }) => {
             <tbody className="divide-y divide-gray-700">
               {filteredItems.map((item) => {
                 const isSelected = item.quantity > 0;
-                const isFixedItem = item.id === LICENCA_ID;
                 const isMonthly = item.type === 'mensal';
                 
                 const valorAnualItem = isMonthly 
@@ -97,23 +95,20 @@ const ItemTable: React.FC<ItemTableProps> = ({ items, onUpdateItem }) => {
                       <div className="flex items-center justify-center gap-1">
                         <button 
                           onClick={() => onUpdateItem(item.id, 'quantity', Math.max(0, item.quantity - 1))}
-                          disabled={isFixedItem}
-                          className={`p-1 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors ${isFixedItem ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className="p-1 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
                         >
                           <Minus className="w-4 h-4" />
                         </button>
                         <input 
                           type="number" 
                           min="0"
-                          disabled={isFixedItem}
-                          className={`w-12 bg-gray-900 border ${isSelected ? 'border-camerite-main text-camerite-main font-bold' : 'border-gray-600 text-gray-300'} rounded p-1 text-center focus:outline-none focus:border-camerite-main transition-all ${isFixedItem ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className={`w-12 bg-gray-900 border ${isSelected ? 'border-camerite-main text-camerite-main font-bold' : 'border-gray-600 text-gray-300'} rounded p-1 text-center focus:outline-none focus:border-camerite-main transition-all`}
                           value={item.quantity}
                           onChange={(e) => onUpdateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
                         />
                         <button 
                           onClick={() => onUpdateItem(item.id, 'quantity', item.quantity + 1)}
-                          disabled={isFixedItem}
-                          className={`p-1 rounded bg-camerite-main/10 text-camerite-main hover:bg-camerite-main/20 transition-colors ${isFixedItem ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className="p-1 rounded bg-camerite-main/10 text-camerite-main hover:bg-camerite-main/20 transition-colors"
                         >
                           <Plus className="w-4 h-4" />
                         </button>
@@ -127,8 +122,7 @@ const ItemTable: React.FC<ItemTableProps> = ({ items, onUpdateItem }) => {
                           min="0"
                           step="0.01"
                           placeholder="0"
-                          disabled={isFixedItem}
-                          className={`w-24 bg-gray-900 border border-gray-700 rounded px-2 py-1 text-right text-white focus:outline-none focus:border-camerite-main transition-all ${isFixedItem ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className="w-24 bg-gray-900 border border-gray-700 rounded px-2 py-1 text-right text-white focus:outline-none focus:border-camerite-main transition-all"
                           value={item.unitPrice}
                           onChange={(e) => onUpdateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
                         />

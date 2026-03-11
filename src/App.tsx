@@ -40,30 +40,7 @@ const App: React.FC = () => {
     localStorage.setItem('camerite_settings', JSON.stringify(proposalSettings));
   }, [proposalSettings]);
 
-  useEffect(() => {
-    setItems(prev => prev.map(item => {
-      if (item.id === 22) {
-        let newPrice = 1000;
-        let newQuantity = 0;
-
-        if (proposalSettings.population > 0) {
-          newQuantity = 1;
-          if (proposalSettings.population >= 20001 && proposalSettings.population <= 100000) {
-            newPrice = 3500;
-          } else if (proposalSettings.population >= 100001) {
-            newPrice = 5000;
-          }
-        }
-        
-        return { ...item, unitPrice: newPrice, quantity: newQuantity };
-      }
-      return item;
-    }));
-  }, [proposalSettings.population]);
-
   const handleUpdateItem = (id: number, field: 'quantity' | 'unitPrice', value: number) => {
-    if (id === 22 && field === 'quantity') return;
-
     setItems(prev => prev.map(item => 
       item.id === id ? { ...item, [field]: value } : item
     ));

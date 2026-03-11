@@ -63,6 +63,9 @@ export const generateProposalPDF = async (
   const startY = height - 120; // Adjust based on header size of base PDF
   const safeBottomY = 100; // Margin bottom
   let currentY = startY;
+  
+  const clearRectY = 35;
+  const clearRectHeight = startY - clearRectY + 20;
 
   const drawText = (text: string, font: PDFFont, size: number, color: any, x: number, y: number, align: 'left' | 'center' | 'right' = 'left') => {
     let textWidth = font.widthOfTextAtSize(text, size);
@@ -81,10 +84,10 @@ export const generateProposalPDF = async (
       
       // Clear the content area of the copied page to draw new content
       copiedPage.drawRectangle({
-        x: marginX,
-        y: safeBottomY,
-        width: width - 2 * marginX,
-        height: startY - safeBottomY + 20,
+        x: marginX - 10,
+        y: clearRectY,
+        width: width - 2 * marginX + 20,
+        height: clearRectHeight,
         color: rgb(1, 1, 1),
       });
       
@@ -96,10 +99,10 @@ export const generateProposalPDF = async (
 
   // Clear the content area of the first page we are drawing on
   currentPage.drawRectangle({
-    x: marginX,
-    y: safeBottomY,
-    width: width - 2 * marginX,
-    height: startY - safeBottomY + 20,
+    x: marginX - 10,
+    y: clearRectY,
+    width: width - 2 * marginX + 20,
+    height: clearRectHeight,
     color: rgb(1, 1, 1),
   });
 
