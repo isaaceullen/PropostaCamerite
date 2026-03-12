@@ -32,6 +32,7 @@ export const INITIAL_ITEMS: ProposalItem[] = [
   { id: 39, desc: "Contagem de Pessoas", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
   { id: 40, desc: "Detecção de Intrusão", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
   { id: 41, desc: "Detecção de Aglomeração", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
+  { id: 42, desc: "Detecção de Queda", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
   { id: 21, desc: "Licença Adicional Hórus", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
   { id: 37, desc: "Integração LPR (envio de imagens)", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
   { id: 22, desc: "Licença de Uso da Plataforma", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
