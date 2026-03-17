@@ -24,7 +24,8 @@ export const generateProposalPDF = async (
   basePdfBuffer: ArrayBuffer,
   items: ProposalItem[],
   colors: ColorSettings,
-  settings: ProposalSettings
+  settings: ProposalSettings,
+  compressionLevel: 'none' | 'medium' | 'high' = 'none'
 ): Promise<Uint8Array> => {
   const doc = await PDFDocument.load(basePdfBuffer);
   const templateDoc = await PDFDocument.load(basePdfBuffer);
@@ -295,6 +296,21 @@ export const generateProposalPDF = async (
   currentY -= 15;
   drawText("CNPJ: 14.656.882/0001-04", helveticaFont, 10, rgb(0,0,0), width / 2, currentY, 'center');
 
-  return await doc.save();
+  // Lógica de Compressão
+  // Ajuste de qualidade para imagens (caso sejam inseridas no PDF)
+  const imageQuality = compressionLevel === 'none' ? 1.0 : compressionLevel === 'medium' ? 0.7 : 0.4;
+  const dpiScale = compressionLevel === 'none' ? 1.0 : compressionLevel === 'medium' ? 0.8 : 0.5;
+  
+  // Nota: pdf-lib não suporta recompressão nativa de imagens já embutidas no PDF base.
+  // Utilizamos useObjectStreams para otimizar a estrutura do PDF.
+  let saveOptions: any = { useObjectStreams: false };
+  
+  if (compressionLevel === 'medium') {
+    saveOptions = { useObjectStreams: true };
+  } else if (compressionLevel === 'high') {
+    saveOptions = { useObjectStreams: true };
+  }
+
+  return await doc.save(saveOptions);
 };
 

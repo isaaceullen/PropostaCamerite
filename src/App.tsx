@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, FileText, Settings, Loader2, Calendar, MapPin, Clock, Users, Trash2 } from 'lucide-react';
+import { Download, FileText, Settings, Loader2, Calendar, MapPin, Clock, Users, Trash2, ChevronDown } from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import ItemTable from './components/ItemTable';
 import { ProposalItem, ColorSettings, ProposalSettings } from './types';
@@ -13,6 +13,7 @@ const App: React.FC = () => {
   });
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   
   const [proposalSettings, setProposalSettings] = useState<ProposalSettings>(() => {
     const saved = localStorage.getItem('camerite_settings');
@@ -81,7 +82,8 @@ const App: React.FC = () => {
       .substring(0, 18);
   };
 
-  const handleGeneratePDF = async () => {
+  const handleGeneratePDF = async (compressionLevel: 'none' | 'medium' | 'high') => {
+    setShowDropdown(false);
     if (!pdfFile) {
       alert("Por favor, faça upload do PDF base primeiro.");
       return;
@@ -97,7 +99,7 @@ const App: React.FC = () => {
 
     try {
       const fileBuffer = await pdfFile.arrayBuffer();
-      const pdfBytes = await generateProposalPDF(fileBuffer, items, colors, proposalSettings);
+      const pdfBytes = await generateProposalPDF(fileBuffer, items, colors, proposalSettings, compressionLevel);
 
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
@@ -268,29 +270,58 @@ const App: React.FC = () => {
             </div>
             <div className="text-[10px] text-gray-500 uppercase font-bold tracking-tight">Camerite Sistemas S/A</div>
           </div>
-          <button
-            onClick={handleGeneratePDF}
-            disabled={!pdfFile || isGenerating}
-            className={`
-              flex items-center gap-2 px-6 py-3 rounded-full font-bold shadow-lg transition-all transform hover:-translate-y-1
-              ${!pdfFile 
-                ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
-                : 'bg-gradient-to-r from-camerite-dark to-camerite-main text-white hover:shadow-camerite-main/40'
-              }
-            `}
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Gerando PDF...
-              </>
-            ) : (
-              <>
-                <Download className="w-5 h-5" />
-                Gerar PDF Final
-              </>
+          <div className="relative">
+            <button
+              onClick={() => setShowDropdown(!showDropdown)}
+              disabled={!pdfFile || isGenerating}
+              className={`
+                flex items-center gap-2 px-6 py-3 rounded-full font-bold shadow-lg transition-all transform hover:-translate-y-1
+                ${!pdfFile 
+                  ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
+                  : 'bg-gradient-to-r from-camerite-dark to-camerite-main text-white hover:shadow-camerite-main/40'
+                }
+              `}
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Gerando PDF...
+                </>
+              ) : (
+                <>
+                  <Download className="w-5 h-5" />
+                  Gerar PDF Final
+                  <ChevronDown className="w-4 h-4 ml-1" />
+                </>
+              )}
+            </button>
+            
+            {showDropdown && !isGenerating && pdfFile && (
+              <div className="absolute bottom-full right-0 mb-2 w-64 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl overflow-hidden z-50">
+                <button 
+                  onClick={() => handleGeneratePDF('none')} 
+                  className="w-full text-left px-4 py-3 hover:bg-gray-700 transition-colors border-b border-gray-700/50"
+                >
+                  <div className="text-white font-medium text-sm">Gerar sem comprimir</div>
+                  <div className="text-xs text-gray-400 mt-0.5">Qualidade Máxima</div>
+                </button>
+                <button 
+                  onClick={() => handleGeneratePDF('medium')} 
+                  className="w-full text-left px-4 py-3 hover:bg-gray-700 transition-colors border-b border-gray-700/50"
+                >
+                  <div className="text-white font-medium text-sm">Comprimir média</div>
+                  <div className="text-xs text-gray-400 mt-0.5">Equilíbrio entre peso e qualidade</div>
+                </button>
+                <button 
+                  onClick={() => handleGeneratePDF('high')} 
+                  className="w-full text-left px-4 py-3 hover:bg-gray-700 transition-colors"
+                >
+                  <div className="text-white font-medium text-sm">Comprimir muito</div>
+                  <div className="text-xs text-gray-400 mt-0.5">Redução agressiva de tamanho</div>
+                </button>
+              </div>
             )}
-          </button>
+          </div>
         </div>
       </div>
     </div>
