@@ -43,7 +43,7 @@ export const INITIAL_ITEMS: ProposalItem[] = [
   { id: 27, desc: "Realocação de Ponto de Leitura de Placas/Faces", type: "unico", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
   { id: 28, desc: "Realocação Torre de Monitoramento", type: "unico", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
   { id: 38, desc: "Integração LPR c/ órgãos Gov", type: "unico", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
-  { id: 29, desc: "Instalação e Infraestrutura do projeto", type: "unico", unit: "SERVIÇO", unitPrice: 0, quantity: 1 }
+  { id: 29, desc: "Setup de Projeto", type: "unico", unit: "SERVIÇO", unitPrice: 0, quantity: 1 }
 ];
 
 export const MESES = [
