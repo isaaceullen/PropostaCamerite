@@ -251,29 +251,39 @@ export const generateProposalPDF = async (
   drawText("DO INVESTIMENTO", helveticaBold, 12, primaryColor, marginX, currentY);
   currentY -= 15;
   
-  const investimentoText = `O valor mensal para a prestação dos serviços é de ${formatCurrency(totalMensal)} (${valorPorExtenso(totalMensal)}). O custo de implantação é de ${formatCurrency(totalImplantacao)} (${valorPorExtenso(totalImplantacao)}). O valor total para 12 meses é de ${formatCurrency(totalAnualGeral)} (${valorPorExtenso(totalAnualGeral)}).`;
+  const totalDozeMensalidades = totalMensal * 12;
   
-  const invWords = investimentoText.split(' ');
-  let invLines = [];
-  let invLine = invWords[0];
-  for (let j = 1; j < invWords.length; j++) {
-    const word = invWords[j];
-    const w = helveticaFont.widthOfTextAtSize(invLine + " " + word, 10);
-    if (w < width - 2 * marginX) {
-      invLine += " " + word;
-    } else {
-      invLines.push(invLine);
-      invLine = word;
-    }
-  }
-  invLines.push(invLine);
+  const paragraphs = [
+    `O valor mensal para a prestação dos serviços é de ${formatCurrency(totalMensal)} (${valorPorExtenso(totalMensal)}). O valor total referente às 12 mensalidades é de ${formatCurrency(totalDozeMensalidades)} (${valorPorExtenso(totalDozeMensalidades)}).`,
+    `Adicionalmente, será cobrada uma taxa de implantação única, no valor de ${formatCurrency(totalImplantacao)} (${valorPorExtenso(totalImplantacao)}), devida exclusivamente no início do projeto.`,
+    `Dessa forma:`,
+    `• No primeiro mês, será cobrado o valor da implantação + a primeira mensalidade;`,
+    `• A partir do segundo mês, será cobrada apenas a mensalidade de ${formatCurrency(totalMensal)} (${valorPorExtenso(totalMensal)}).`
+  ];
 
-  for (const line of invLines) {
-    await checkPageBreak(15);
-    drawText(line, helveticaFont, 10, rgb(0,0,0), marginX, currentY);
-    currentY -= 15;
+  for (const paragraph of paragraphs) {
+    const words = paragraph.split(' ');
+    let lines = [];
+    let currentLine = words[0];
+    for (let j = 1; j < words.length; j++) {
+      const word = words[j];
+      const w = helveticaFont.widthOfTextAtSize(currentLine + " " + word, 10);
+      if (w < width - 2 * marginX) {
+        currentLine += " " + word;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    }
+    lines.push(currentLine);
+
+    for (const line of lines) {
+      await checkPageBreak(15);
+      drawText(line, helveticaFont, 10, rgb(0,0,0), marginX, currentY);
+      currentY -= 15;
+    }
+    currentY -= 10; // Espaçamento extra entre parágrafos
   }
-  currentY -= 15;
 
   await checkPageBreak(40);
   drawText("DA VALIDADE DA PROPOSTA", helveticaBold, 12, primaryColor, marginX, currentY);
