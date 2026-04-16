@@ -4,6 +4,7 @@ export const INITIAL_ITEMS: ProposalItem[] = [
   { id: 1,  desc: "Licença de Armazenamento em Nuvem 03 dias", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
   { id: 2,  desc: "Licença de Armazenamento em Nuvem 07 dias", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
   { id: 3,  desc: "Licença de Armazenamento em Nuvem 30 dias", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
+  { id: 11, desc: "Licença de Armazenamento em Nuvem 60 dias + Aluguel da Câmera", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
   { id: 4,  desc: "Licença de Armazenamento em Nuvem 03 dias + Manutenção Preventiva do Ponto (com comodato gratuito de câmera de 2MP)", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
   { id: 5,  desc: "Licença de Armazenamento em Nuvem 07 dias + Manutenção Preventiva do Ponto (com comodato gratuito de câmera de 2MP)", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
   { id: 6,  desc: "Licença de Armazenamento em Nuvem 15 dias + Manutenção Preventiva do Ponto (com comodato gratuito de câmera de 2MP )", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
