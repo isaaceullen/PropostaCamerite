@@ -39,6 +39,7 @@ export const INITIAL_ITEMS: ProposalItem[] = [
   { id: 22, desc: "Licença de Uso da Plataforma", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
   { id: 23, desc: "Link de Internet 20Mbps por ponto", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
   { id: 24, desc: "Ponto de Energia", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
+  { id: 43, desc: "Locação de Equipamento", type: "mensal", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
   { id: 25, desc: "Treinamento sobre o Uso da Plataforma", type: "unico", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
   { id: 26, desc: "Realocação de Ponto de Monitoramento", type: "unico", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
   { id: 27, desc: "Realocação de Ponto de Leitura de Placas/Faces", type: "unico", unit: "SERVIÇO", unitPrice: 0, quantity: 0 },
