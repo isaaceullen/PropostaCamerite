@@ -25,7 +25,9 @@ export const generateProposalPDF = async (
   items: ProposalItem[],
   colors: ColorSettings,
   settings: ProposalSettings,
-  compressionLevel: 'none' | 'medium' | 'high' = 'none'
+  compressionLevel: 'none' | 'medium' | 'high' = 'none',
+  acessoPlataforma: number = 0,
+  acessoPlataformaQty: number = 0
 ): Promise<Uint8Array> => {
   const doc = await PDFDocument.load(basePdfBuffer);
   const templateDoc = await PDFDocument.load(basePdfBuffer);
@@ -40,7 +42,7 @@ export const generateProposalPDF = async (
 
   const totalMensal = selectedItems
     .filter(i => i.type === 'mensal')
-    .reduce((acc, curr) => acc + (curr.quantity * curr.unitPrice), 0);
+    .reduce((acc, curr) => acc + (curr.quantity * curr.unitPrice), 0) + (acessoPlataformaQty * acessoPlataforma);
   
   const totalTreinamento = selectedItems
     .filter(i => i.id === TREINAMENTO_ID)
@@ -55,6 +57,46 @@ export const generateProposalPDF = async (
     .reduce((acc, curr) => acc + (curr.quantity * curr.unitPrice), 0);
 
   const totalAnualGeral = (totalMensal * 12) + totalImplantacao + totalRealocacoes + totalTreinamento;
+
+  // Construct itemsToDraw to place Acesso à Plataforma exactly below the last Licença de Armazenamento em Nuvem item
+  const itemsToDraw: ProposalItem[] = [];
+  let lastNuvemIndex = -1;
+  for (let idx = 0; idx < selectedItems.length; idx++) {
+    if (selectedItems[idx].desc.includes("Licença de Armazenamento em Nuvem")) {
+      lastNuvemIndex = idx;
+    }
+  }
+
+  const isAcessoActive = acessoPlataformaQty > 0 && acessoPlataforma > 0;
+  if (isAcessoActive) {
+    if (lastNuvemIndex !== -1) {
+      for (let idx = 0; idx < selectedItems.length; idx++) {
+        itemsToDraw.push(selectedItems[idx]);
+        if (idx === lastNuvemIndex) {
+          itemsToDraw.push({
+            id: 999,
+            desc: "Acesso à Plataforma",
+            quantity: acessoPlataformaQty,
+            unitPrice: acessoPlataforma,
+            type: "mensal",
+            unit: "SERVIÇO"
+          });
+        }
+      }
+    } else {
+      itemsToDraw.push({
+        id: 999,
+        desc: "Acesso à Plataforma",
+        quantity: acessoPlataformaQty,
+        unitPrice: acessoPlataforma,
+        type: "mensal",
+        unit: "SERVIÇO"
+      });
+      selectedItems.forEach(i => itemsToDraw.push(i));
+    }
+  } else {
+    selectedItems.forEach(i => itemsToDraw.push(i));
+  }
 
   const pages = doc.getPages();
   const lastPageIndex = pages.length - 1;
@@ -145,8 +187,8 @@ export const generateProposalPDF = async (
   drawTableHeader();
 
   // 4. LINHAS DA TABELA (ITENS)
-  for (let i = 0; i < selectedItems.length; i++) {
-    const item = selectedItems[i];
+  for (let i = 0; i < itemsToDraw.length; i++) {
+    const item = itemsToDraw[i];
     
     const descText = item.desc;
     const maxDescWidth = colWidths[0] - 10;

@@ -5,9 +5,20 @@ import { Search, Minus, Plus } from 'lucide-react';
 interface ItemTableProps {
   items: ProposalItem[];
   onUpdateItem: (id: number, field: 'quantity' | 'unitPrice', value: number) => void;
+  acessoPlataforma: number;
+  onUpdateAcessoPlataforma: (value: number) => void;
+  acessoPlataformaQty: number;
+  onUpdateAcessoPlataformaQty: (value: number) => void;
 }
 
-const ItemTable: React.FC<ItemTableProps> = ({ items, onUpdateItem }) => {
+const ItemTable: React.FC<ItemTableProps> = ({
+  items,
+  onUpdateItem,
+  acessoPlataforma,
+  onUpdateAcessoPlataforma,
+  acessoPlataformaQty,
+  onUpdateAcessoPlataformaQty
+}) => {
   const [searchTerm, setSearchTerm] = React.useState('');
 
   const filteredItems = items.filter(item => 
@@ -28,7 +39,7 @@ const ItemTable: React.FC<ItemTableProps> = ({ items, onUpdateItem }) => {
 
   const totalMensal = items
     .filter(i => i.type === 'mensal')
-    .reduce((acc, curr) => acc + (curr.quantity * curr.unitPrice), 0);
+    .reduce((acc, curr) => acc + (curr.quantity * curr.unitPrice), 0) + (acessoPlataformaQty * acessoPlataforma);
   
   const totalTreinamento = items
     .filter(i => i.id === TREINAMENTO_ID)
@@ -73,77 +84,161 @@ const ItemTable: React.FC<ItemTableProps> = ({ items, onUpdateItem }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
-              {filteredItems.map((item) => {
-                const isSelected = item.quantity > 0;
-                const isMonthly = item.type === 'mensal';
-                
-                const valorAnualItem = isMonthly 
-                  ? (item.quantity * item.unitPrice * 12)
-                  : (item.quantity * item.unitPrice);
+              {(() => {
+                const rows: React.ReactNode[] = [];
+                let renderedAcessoPlataforma = false;
+                const showAcessoPlataforma = !searchTerm || 'acesso à plataforma'.includes(searchTerm.toLowerCase());
 
-                return (
-                  <tr key={item.id} className={`hover:bg-gray-750 transition-colors ${isSelected ? 'bg-camerite-main/5' : ''}`}>
-                    <td className="px-4 py-3">
-                      <p className="text-white line-clamp-2" title={item.desc}>{item.desc}</p>
-                      <div className="flex gap-1 mt-1">
-                        <span className={`text-[10px] uppercase px-1.5 py-0.5 rounded ${isMonthly ? 'bg-blue-900 text-blue-200' : 'bg-orange-900 text-orange-200'}`}>
-                          {item.type}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <button 
-                          onClick={() => onUpdateItem(item.id, 'quantity', Math.max(0, item.quantity - 1))}
-                          className="p-1 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <input 
-                          type="number" 
-                          min="0"
-                          className={`w-12 bg-gray-900 border ${isSelected ? 'border-camerite-main text-camerite-main font-bold' : 'border-gray-600 text-gray-300'} rounded p-1 text-center focus:outline-none focus:border-camerite-main transition-all`}
-                          value={item.quantity}
-                          onChange={(e) => onUpdateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
-                        />
-                        <button 
-                          onClick={() => onUpdateItem(item.id, 'quantity', item.quantity + 1)}
-                          className="p-1 rounded bg-camerite-main/10 text-camerite-main hover:bg-camerite-main/20 transition-colors"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <span className="text-camerite-main text-xs font-bold">R$</span>
-                        <input 
-                          type="number" 
-                          min="0"
-                          step="0.01"
-                          placeholder="0"
-                          className="w-24 bg-gray-900 border border-gray-700 rounded px-2 py-1 text-right text-white focus:outline-none focus:border-camerite-main transition-all"
-                          value={item.unitPrice}
-                          onChange={(e) => onUpdateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
-                        />
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right text-gray-400 italic">
-                      {isMonthly ? formatCurrency(item.quantity * item.unitPrice) : '------'}
-                    </td>
-                    <td className={`px-4 py-3 text-right font-medium ${isSelected ? 'text-white' : 'text-gray-500'}`}>
-                      {formatCurrency(valorAnualItem)}
-                    </td>
-                  </tr>
-                );
-              })}
-              {filteredItems.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                    Nenhum item encontrado.
-                  </td>
-                </tr>
-              )}
+                const renderAcessoPlataformaRow = () => {
+                  const isSelected = acessoPlataformaQty > 0;
+                  return (
+                    <tr key="acesso-plataforma-row" className={`hover:bg-gray-750 transition-colors ${isSelected ? 'bg-camerite-main/5' : ''}`}>
+                      <td className="px-4 py-3 max-w-[400px]">
+                        <p className="text-white line-clamp-2 font-medium" title="Acesso à Plataforma">Acesso à Plataforma</p>
+                        <div className="flex gap-1 mt-1">
+                          <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-blue-900 text-blue-200">
+                            mensal
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button 
+                            type="button"
+                            onClick={() => onUpdateAcessoPlataformaQty(Math.max(0, acessoPlataformaQty - 1))}
+                            className="p-1 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <input 
+                            type="number" 
+                            min="0"
+                            className={`w-12 bg-gray-900 border ${isSelected ? 'border-camerite-main text-camerite-main font-bold' : 'border-gray-600 text-gray-300'} rounded p-1 text-center focus:outline-none focus:border-camerite-main transition-all`}
+                            value={acessoPlataformaQty}
+                            onChange={(e) => onUpdateAcessoPlataformaQty(parseInt(e.target.value) || 0)}
+                          />
+                          <button 
+                            type="button"
+                            onClick={() => onUpdateAcessoPlataformaQty(acessoPlataformaQty + 1)}
+                            className="p-1 rounded bg-camerite-main/10 text-camerite-main hover:bg-camerite-main/20 transition-colors"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <span className="text-camerite-main text-xs font-bold">R$</span>
+                          <input 
+                            type="number" 
+                            min="0"
+                            step="0.01"
+                            placeholder="0"
+                            className="w-24 bg-gray-900 border border-gray-700 rounded px-2 py-1 text-right text-white focus:outline-none focus:border-camerite-main transition-all"
+                            value={acessoPlataforma}
+                            onChange={(e) => onUpdateAcessoPlataforma(parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-400 italic">
+                        {formatCurrency(acessoPlataformaQty * acessoPlataforma)}
+                      </td>
+                      <td className={`px-4 py-3 text-right font-medium ${isSelected ? 'text-white' : 'text-gray-500'}`}>
+                        {formatCurrency(acessoPlataformaQty * acessoPlataforma * 12)}
+                      </td>
+                    </tr>
+                  );
+                };
+
+                filteredItems.forEach((item) => {
+                  const isSelected = item.quantity > 0;
+                  const isMonthly = item.type === 'mensal';
+                  const valorAnualItem = isMonthly 
+                    ? (item.quantity * item.unitPrice * 12)
+                    : (item.quantity * item.unitPrice);
+
+                  rows.push(
+                    <tr key={item.id} className={`hover:bg-gray-750 transition-colors ${isSelected ? 'bg-camerite-main/5' : ''}`}>
+                      <td className="px-4 py-3">
+                        <p className="text-white line-clamp-2" title={item.desc}>{item.desc}</p>
+                        <div className="flex gap-1 mt-1">
+                          <span className={`text-[10px] uppercase px-1.5 py-0.5 rounded ${isMonthly ? 'bg-blue-900 text-blue-200' : 'bg-orange-900 text-orange-200'}`}>
+                            {item.type}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button 
+                            type="button"
+                            onClick={() => onUpdateItem(item.id, 'quantity', Math.max(0, item.quantity - 1))}
+                            className="p-1 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <input 
+                            type="number" 
+                            min="0"
+                            className={`w-12 bg-gray-900 border ${isSelected ? 'border-camerite-main text-camerite-main font-bold' : 'border-gray-600 text-gray-300'} rounded p-1 text-center focus:outline-none focus:border-camerite-main transition-all`}
+                            value={item.quantity}
+                            onChange={(e) => onUpdateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
+                          />
+                          <button 
+                            type="button"
+                            onClick={() => onUpdateItem(item.id, 'quantity', item.quantity + 1)}
+                            className="p-1 rounded bg-camerite-main/10 text-camerite-main hover:bg-camerite-main/20 transition-colors"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <span className="text-camerite-main text-xs font-bold">R$</span>
+                          <input 
+                            type="number" 
+                            min="0"
+                            step="0.01"
+                            placeholder="0"
+                            className="w-24 bg-gray-900 border border-gray-700 rounded px-2 py-1 text-right text-white focus:outline-none focus:border-camerite-main transition-all"
+                            value={item.unitPrice}
+                            onChange={(e) => onUpdateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-400 italic">
+                        {isMonthly ? formatCurrency(item.quantity * item.unitPrice) : '------'}
+                      </td>
+                      <td className={`px-4 py-3 text-right font-medium ${isSelected ? 'text-white' : 'text-gray-500'}`}>
+                        {formatCurrency(valorAnualItem)}
+                      </td>
+                    </tr>
+                  );
+
+                  if (item.id === 11) {
+                    if (showAcessoPlataforma) {
+                      rows.push(renderAcessoPlataformaRow());
+                      renderedAcessoPlataforma = true;
+                    }
+                  }
+                });
+
+                if (!renderedAcessoPlataforma && showAcessoPlataforma && searchTerm) {
+                  rows.push(renderAcessoPlataformaRow());
+                }
+
+                if (rows.length === 0) {
+                  return (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                        Nenhum item encontrado.
+                      </td>
+                    </tr>
+                  );
+                }
+
+                return rows;
+              })()}
             </tbody>
           </table>
         </div>

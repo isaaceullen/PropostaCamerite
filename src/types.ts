@@ -7,6 +7,7 @@ export interface ProposalItem {
   unit: string;
   unitPrice: number;
   quantity: number;
+  acessoPlataforma?: number;
 }
 
 export interface ColorSettings {

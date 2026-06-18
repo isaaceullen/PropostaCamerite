@@ -15,6 +15,15 @@ const App: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   
+  const [acessoPlataforma, setAcessoPlataforma] = useState<number>(() => {
+    const saved = localStorage.getItem('camerite_acesso_plataforma');
+    return saved ? Number(saved) : 0;
+  });
+  const [acessoPlataformaQty, setAcessoPlataformaQty] = useState<number>(() => {
+    const saved = localStorage.getItem('camerite_acesso_plataforma_qty');
+    return saved ? Number(saved) : 0;
+  });
+
   const [proposalSettings, setProposalSettings] = useState<ProposalSettings>(() => {
     const saved = localStorage.getItem('camerite_settings');
     return saved ? JSON.parse(saved) : {
@@ -41,6 +50,14 @@ const App: React.FC = () => {
     localStorage.setItem('camerite_settings', JSON.stringify(proposalSettings));
   }, [proposalSettings]);
 
+  useEffect(() => {
+    localStorage.setItem('camerite_acesso_plataforma', acessoPlataforma.toString());
+  }, [acessoPlataforma]);
+
+  useEffect(() => {
+    localStorage.setItem('camerite_acesso_plataforma_qty', acessoPlataformaQty.toString());
+  }, [acessoPlataformaQty]);
+
   const handleUpdateItem = (id: number, field: 'quantity' | 'unitPrice', value: number) => {
     setItems(prev => prev.map(item => 
       item.id === id ? { ...item, [field]: value } : item
@@ -50,6 +67,8 @@ const App: React.FC = () => {
   const handleResetData = () => {
     if (window.confirm("Tem certeza que deseja limpar todos os dados preenchidos? Isso resetará as quantidades e configurações.")) {
       setItems(JSON.parse(JSON.stringify(INITIAL_ITEMS)));
+      setAcessoPlataforma(0);
+      setAcessoPlataformaQty(0);
       setProposalSettings({
         validityDays: 60,
         proposalDate: new Date().toISOString().split('T')[0],
@@ -61,6 +80,8 @@ const App: React.FC = () => {
       });
       localStorage.removeItem('camerite_items');
       localStorage.removeItem('camerite_settings');
+      localStorage.removeItem('camerite_acesso_plataforma');
+      localStorage.removeItem('camerite_acesso_plataforma_qty');
     }
   };
 
@@ -89,7 +110,7 @@ const App: React.FC = () => {
       return;
     }
 
-    const hasItems = items.some(i => i.quantity > 0);
+    const hasItems = items.some(i => i.quantity > 0) || (acessoPlataformaQty > 0 && acessoPlataforma > 0);
     if (!hasItems) {
       alert("Selecione pelo menos um item (Quantidade > 0).");
       return;
@@ -99,7 +120,15 @@ const App: React.FC = () => {
 
     try {
       const fileBuffer = await pdfFile.arrayBuffer();
-      const pdfBytes = await generateProposalPDF(fileBuffer, items, colors, proposalSettings, compressionLevel);
+      const pdfBytes = await generateProposalPDF(
+        fileBuffer,
+        items,
+        colors,
+        proposalSettings,
+        compressionLevel,
+        acessoPlataforma,
+        acessoPlataformaQty
+      );
 
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
@@ -167,7 +196,14 @@ const App: React.FC = () => {
              <div className="w-6 h-6 rounded-full bg-camerite-main flex items-center justify-center text-xs font-bold text-white">2</div>
              <h2 className="text-lg font-semibold text-white">Configurar Itens e Quantidades</h2>
           </div>
-          <ItemTable items={items} onUpdateItem={handleUpdateItem} />
+          <ItemTable 
+            items={items} 
+            onUpdateItem={handleUpdateItem} 
+            acessoPlataforma={acessoPlataforma}
+            onUpdateAcessoPlataforma={setAcessoPlataforma}
+            acessoPlataformaQty={acessoPlataformaQty}
+            onUpdateAcessoPlataformaQty={setAcessoPlataformaQty}
+          />
         </section>
 
         <section className="mb-10">
