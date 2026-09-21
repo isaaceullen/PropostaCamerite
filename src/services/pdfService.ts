@@ -27,7 +27,8 @@ export const generateProposalPDF = async (
   settings: ProposalSettings,
   compressionLevel: 'none' | 'medium' | 'high' = 'none',
   acessoPlataforma: number = 0,
-  acessoPlataformaQty: number = 0
+  acessoPlataformaQty: number = 0,
+  showAnnualColumn: boolean = false
 ): Promise<Uint8Array> => {
   const doc = await PDFDocument.load(basePdfBuffer);
   const templateDoc = await PDFDocument.load(basePdfBuffer);
@@ -120,21 +121,32 @@ export const generateProposalPDF = async (
   };
 
   // 2. ESTRUTURA E LARGURA DAS COLUNAS DA TABELA
+  // Ajusta quantidade e largura das colunas baseado no toggle showAnnualColumn
   const tableWidth = width - 2 * marginX;
-  const colWidths = [
+  const colWidths = showAnnualColumn ? [
     tableWidth * 0.50, // Item
     tableWidth * 0.10, // Qtd
     tableWidth * 0.13, // Unitário
     tableWidth * 0.13, // Mensal
     tableWidth * 0.14  // Anual
+  ] : [
+    tableWidth * 0.58, // Item
+    tableWidth * 0.12, // Qtd
+    tableWidth * 0.15, // Unitário
+    tableWidth * 0.15  // Mensal
   ];
   
-  const colX = [
+  const colX = showAnnualColumn ? [
     marginX,
     marginX + colWidths[0],
     marginX + colWidths[0] + colWidths[1],
     marginX + colWidths[0] + colWidths[1] + colWidths[2],
     marginX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]
+  ] : [
+    marginX,
+    marginX + colWidths[0],
+    marginX + colWidths[0] + colWidths[1],
+    marginX + colWidths[0] + colWidths[1] + colWidths[2]
   ];
 
   const headerHeight = 20;
@@ -154,7 +166,9 @@ export const generateProposalPDF = async (
     drawText("Qtd.", helveticaBold, 10, rgb(1,1,1), colX[1] + colWidths[1]/2, headerY, 'center');
     drawText("Unitário", helveticaBold, 10, rgb(1,1,1), colX[2] + colWidths[2] - 5, headerY, 'right');
     drawText("Mensal", helveticaBold, 10, rgb(1,1,1), colX[3] + colWidths[3] - 5, headerY, 'right');
-    drawText("Anual", helveticaBold, 10, rgb(1,1,1), colX[4] + colWidths[4] - 5, headerY, 'right');
+    if (showAnnualColumn) {
+      drawText("Anual", helveticaBold, 10, rgb(1,1,1), colX[4] + colWidths[4] - 5, headerY, 'right');
+    }
 
     currentY -= headerHeight;
   };
@@ -234,14 +248,16 @@ export const generateProposalPDF = async (
     drawText(item.quantity.toString(), helveticaFont, 9, rgb(0,0,0), colX[1] + colWidths[1]/2, textY, 'center');
     drawText(formatCurrency(item.unitPrice), helveticaFont, 9, rgb(0,0,0), colX[2] + colWidths[2] - 5, textY, 'right');
     drawText(isMonthly ? formatCurrency(valorMensalItem) : "-", helveticaFont, 9, rgb(0,0,0), colX[3] + colWidths[3] - 5, textY, 'right');
-    drawText(formatCurrency(valorAnualItem), helveticaFont, 9, rgb(0,0,0), colX[4] + colWidths[4] - 5, textY, 'right');
+    if (showAnnualColumn) {
+      drawText(formatCurrency(valorAnualItem), helveticaFont, 9, rgb(0,0,0), colX[4] + colWidths[4] - 5, textY, 'right');
+    }
 
     currentY -= itemHeight;
   }
 
   // 5. RODAPÉ DA TABELA (TOTAIS)
   const footerHeight = 20;
-  await checkPageBreak(footerHeight * 2);
+  await checkPageBreak(showAnnualColumn ? footerHeight * 2 : footerHeight);
   
   const purpleWidth = tableWidth * 0.75;
   const grayWidth = tableWidth * 0.25;
@@ -267,26 +283,30 @@ export const generateProposalPDF = async (
   
   currentY -= footerHeight;
 
-  // Linha 2: TOTAL PARA 12 MESES
-  currentPage.drawRectangle({
-    x: marginX,
-    y: currentY - footerHeight + 5,
-    width: purpleWidth,
-    height: footerHeight,
-    color: primaryColor,
-  });
-  currentPage.drawRectangle({
-    x: marginX + purpleWidth,
-    y: currentY - footerHeight + 5,
-    width: grayWidth,
-    height: footerHeight,
-    color: hexToRgb('#E5E7EB'),
-  });
-  
-  drawText("TOTAL PARA 12 (DOZE) MESES DE CONTRATO", helveticaBold, 10, rgb(1,1,1), marginX + purpleWidth - 10, currentY - 10, 'right');
-  drawText(formatCurrency(totalAnualGeral), helveticaBold, 10, rgb(0,0,0), marginX + tableWidth - 10, currentY - 10, 'right');
+  // Linha 2: TOTAL PARA 12 MESES (apenas quando coluna Anual estiver ativa)
+  if (showAnnualColumn) {
+    currentPage.drawRectangle({
+      x: marginX,
+      y: currentY - footerHeight + 5,
+      width: purpleWidth,
+      height: footerHeight,
+      color: primaryColor,
+    });
+    currentPage.drawRectangle({
+      x: marginX + purpleWidth,
+      y: currentY - footerHeight + 5,
+      width: grayWidth,
+      height: footerHeight,
+      color: hexToRgb('#E5E7EB'),
+    });
+    
+    drawText("TOTAL PARA 12 (DOZE) MESES DE CONTRATO", helveticaBold, 10, rgb(1,1,1), marginX + purpleWidth - 10, currentY - 10, 'right');
+    drawText(formatCurrency(totalAnualGeral), helveticaBold, 10, rgb(0,0,0), marginX + tableWidth - 10, currentY - 10, 'right');
 
-  currentY -= (footerHeight + 20);
+    currentY -= footerHeight;
+  }
+
+  currentY -= 20;
 
   // 7. TEXTOS FINAIS DE FECHAMENTO
   await checkPageBreak(60);
@@ -295,12 +315,14 @@ export const generateProposalPDF = async (
   
   const totalDozeMensalidades = totalMensal * 12;
   
-  const paragraphs = [
+  const paragraphs = showAnnualColumn ? [
     `O valor mensal para a prestação dos serviços é de ${formatCurrency(totalMensal)} (${valorPorExtenso(totalMensal)}). O valor total referente às 12 mensalidades é de ${formatCurrency(totalDozeMensalidades)} (${valorPorExtenso(totalDozeMensalidades)}).`,
     `Adicionalmente, será cobrada uma taxa de implantação única, no valor de ${formatCurrency(totalImplantacao)} (${valorPorExtenso(totalImplantacao)}), devida exclusivamente no início do projeto.`,
     `Dessa forma:`,
     `• No primeiro mês, será cobrado o valor da implantação + a primeira mensalidade;`,
     `• A partir do segundo mês, será cobrada apenas a mensalidade de ${formatCurrency(totalMensal)} (${valorPorExtenso(totalMensal)}).`
+  ] : [
+    `O valor mensal para a prestação dos serviços é de ${formatCurrency(totalMensal)} (${valorPorExtenso(totalMensal)}).`
   ];
 
   for (const paragraph of paragraphs) {

@@ -24,6 +24,11 @@ const App: React.FC = () => {
     return saved ? Number(saved) : 0;
   });
 
+  const [showAnnualColumn, setShowAnnualColumn] = useState<boolean>(() => {
+    const saved = localStorage.getItem('camerite_show_annual_pdf');
+    return saved ? JSON.parse(saved) : false;
+  });
+
   const [proposalSettings, setProposalSettings] = useState<ProposalSettings>(() => {
     const saved = localStorage.getItem('camerite_settings');
     return saved ? JSON.parse(saved) : {
@@ -58,6 +63,10 @@ const App: React.FC = () => {
     localStorage.setItem('camerite_acesso_plataforma_qty', acessoPlataformaQty.toString());
   }, [acessoPlataformaQty]);
 
+  useEffect(() => {
+    localStorage.setItem('camerite_show_annual_pdf', JSON.stringify(showAnnualColumn));
+  }, [showAnnualColumn]);
+
   const handleUpdateItem = (id: number, field: 'quantity' | 'unitPrice', value: number) => {
     setItems(prev => prev.map(item => 
       item.id === id ? { ...item, [field]: value } : item
@@ -69,6 +78,7 @@ const App: React.FC = () => {
       setItems(JSON.parse(JSON.stringify(INITIAL_ITEMS)));
       setAcessoPlataforma(0);
       setAcessoPlataformaQty(0);
+      setShowAnnualColumn(false);
       setProposalSettings({
         validityDays: 60,
         proposalDate: new Date().toISOString().split('T')[0],
@@ -82,6 +92,7 @@ const App: React.FC = () => {
       localStorage.removeItem('camerite_settings');
       localStorage.removeItem('camerite_acesso_plataforma');
       localStorage.removeItem('camerite_acesso_plataforma_qty');
+      localStorage.removeItem('camerite_show_annual_pdf');
     }
   };
 
@@ -127,7 +138,8 @@ const App: React.FC = () => {
         proposalSettings,
         compressionLevel,
         acessoPlataforma,
-        acessoPlataformaQty
+        acessoPlataformaQty,
+        showAnnualColumn
       );
 
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
@@ -160,7 +172,36 @@ const App: React.FC = () => {
               <p className="text-xs text-camerite-main font-medium uppercase tracking-widest">Gerador de Orçamentos</p>
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3">
+             {/* Toggle Coluna Anual no PDF */}
+             <div className="flex items-center gap-3 bg-gray-900/60 border border-gray-700/60 px-3 py-1.5 rounded-lg">
+                <div className="flex flex-col text-right">
+                   <span className="text-xs font-semibold text-gray-200">Coluna Anual no PDF</span>
+                   {!showAnnualColumn && (
+                      <span className="text-[10px] text-gray-400 hidden sm:inline leading-tight">
+                         O PDF sai sem coluna Anual e sem totais de 12 meses
+                      </span>
+                   )}
+                </div>
+                <button
+                   type="button"
+                   role="switch"
+                   aria-checked={showAnnualColumn}
+                   onClick={() => setShowAnnualColumn(prev => !prev)}
+                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-camerite-main focus:ring-offset-2 focus:ring-offset-gray-900 ${
+                      showAnnualColumn ? 'bg-camerite-main' : 'bg-gray-700'
+                   }`}
+                   title="Alternar exibição da coluna Anual no PDF"
+                >
+                   <span
+                      aria-hidden="true"
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                         showAnnualColumn ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                   />
+                </button>
+             </div>
+
              <button 
                 onClick={handleResetData}
                 className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 flex items-center gap-2 transition-colors text-sm font-medium"
