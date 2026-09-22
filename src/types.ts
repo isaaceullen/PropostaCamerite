@@ -1,4 +1,5 @@
 export type ItemType = 'mensal' | 'unico';
+export type ProposalMode = 'anual' | 'loja';
 
 export interface ProposalItem {
   id: number;
@@ -23,4 +24,7 @@ export interface ProposalSettings {
   recipientName?: string;
   cnpj?: string;
   address?: string;
+  mode?: ProposalMode;
+  storeCount?: number;
 }
+

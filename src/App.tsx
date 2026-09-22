@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Download, FileText, Settings, Loader2, Calendar, MapPin, Clock, Users, Trash2, ChevronDown } from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import ItemTable from './components/ItemTable';
-import { ProposalItem, ColorSettings, ProposalSettings } from './types';
+import { ProposalItem, ColorSettings, ProposalSettings, ProposalMode } from './types';
 import { INITIAL_ITEMS } from './constants';
 import { generateProposalPDF } from './services/pdfService';
 
@@ -14,6 +14,17 @@ const App: React.FC = () => {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+
+  const [mode, setMode] = useState<ProposalMode>(() => {
+    const saved = localStorage.getItem('camerite_mode');
+    return (saved === 'anual' || saved === 'loja') ? saved : 'loja';
+  });
+
+  const [storeCount, setStoreCount] = useState<number>(() => {
+    const saved = localStorage.getItem('camerite_store_count');
+    const parsed = saved ? parseInt(saved, 10) : 1;
+    return parsed && parsed >= 1 ? parsed : 1;
+  });
   
   const [acessoPlataforma, setAcessoPlataforma] = useState<number>(() => {
     const saved = localStorage.getItem('camerite_acesso_plataforma');
@@ -22,11 +33,6 @@ const App: React.FC = () => {
   const [acessoPlataformaQty, setAcessoPlataformaQty] = useState<number>(() => {
     const saved = localStorage.getItem('camerite_acesso_plataforma_qty');
     return saved ? Number(saved) : 0;
-  });
-
-  const [showAnnualColumn, setShowAnnualColumn] = useState<boolean>(() => {
-    const saved = localStorage.getItem('camerite_show_annual_pdf');
-    return saved ? JSON.parse(saved) : false;
   });
 
   const [proposalSettings, setProposalSettings] = useState<ProposalSettings>(() => {
@@ -64,8 +70,12 @@ const App: React.FC = () => {
   }, [acessoPlataformaQty]);
 
   useEffect(() => {
-    localStorage.setItem('camerite_show_annual_pdf', JSON.stringify(showAnnualColumn));
-  }, [showAnnualColumn]);
+    localStorage.setItem('camerite_mode', mode);
+  }, [mode]);
+
+  useEffect(() => {
+    localStorage.setItem('camerite_store_count', storeCount.toString());
+  }, [storeCount]);
 
   const handleUpdateItem = (id: number, field: 'quantity' | 'unitPrice', value: number) => {
     setItems(prev => prev.map(item => 
@@ -73,12 +83,22 @@ const App: React.FC = () => {
     ));
   };
 
+  const handleStoreCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseInt(e.target.value, 10);
+    if (isNaN(val) || val < 1) {
+      setStoreCount(1);
+    } else {
+      setStoreCount(val);
+    }
+  };
+
   const handleResetData = () => {
     if (window.confirm("Tem certeza que deseja limpar todos os dados preenchidos? Isso resetará as quantidades e configurações.")) {
       setItems(JSON.parse(JSON.stringify(INITIAL_ITEMS)));
       setAcessoPlataforma(0);
       setAcessoPlataformaQty(0);
-      setShowAnnualColumn(false);
+      setMode('loja');
+      setStoreCount(1);
       setProposalSettings({
         validityDays: 60,
         proposalDate: new Date().toISOString().split('T')[0],
@@ -92,7 +112,8 @@ const App: React.FC = () => {
       localStorage.removeItem('camerite_settings');
       localStorage.removeItem('camerite_acesso_plataforma');
       localStorage.removeItem('camerite_acesso_plataforma_qty');
-      localStorage.removeItem('camerite_show_annual_pdf');
+      localStorage.removeItem('camerite_mode');
+      localStorage.removeItem('camerite_store_count');
     }
   };
 
@@ -139,7 +160,8 @@ const App: React.FC = () => {
         compressionLevel,
         acessoPlataforma,
         acessoPlataformaQty,
-        showAnnualColumn
+        mode,
+        storeCount
       );
 
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
@@ -162,9 +184,9 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#1a1a1a] pb-32">
       <header className="bg-camerite-dark/20 border-b border-camerite-main/20 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-camerite-main to-camerite-dark rounded-lg flex items-center justify-center shadow-lg shadow-camerite-main/20">
+            <div className="w-10 h-10 bg-gradient-to-br from-camerite-main to-camerite-dark rounded-lg flex items-center justify-center shadow-lg shadow-camerite-main/20 shrink-0">
               <FileText className="text-white w-6 h-6" />
             </div>
             <div>
@@ -172,48 +194,79 @@ const App: React.FC = () => {
               <p className="text-xs text-camerite-main font-medium uppercase tracking-widest">Gerador de Orçamentos</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-             {/* Toggle Coluna Anual no PDF */}
-             <div className="flex items-center gap-3 bg-gray-900/60 border border-gray-700/60 px-3 py-1.5 rounded-lg">
-                <div className="flex flex-col text-right">
-                   <span className="text-xs font-semibold text-gray-200">Coluna Anual no PDF</span>
-                   {!showAnnualColumn && (
-                      <span className="text-[10px] text-gray-400 hidden sm:inline leading-tight">
-                         O PDF sai sem coluna Anual e sem totais de 12 meses
-                      </span>
-                   )}
-                </div>
-                <button
-                   type="button"
-                   role="switch"
-                   aria-checked={showAnnualColumn}
-                   onClick={() => setShowAnnualColumn(prev => !prev)}
-                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-camerite-main focus:ring-offset-2 focus:ring-offset-gray-900 ${
-                      showAnnualColumn ? 'bg-camerite-main' : 'bg-gray-700'
-                   }`}
-                   title="Alternar exibição da coluna Anual no PDF"
-                >
-                   <span
-                      aria-hidden="true"
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                         showAnnualColumn ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                   />
-                </button>
-             </div>
 
-             <button 
-                onClick={handleResetData}
-                className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 flex items-center gap-2 transition-colors text-sm font-medium"
-                title="Limpar todos os dados"
-             >
-                <Trash2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Limpar Dados</span>
-             </button>
-             <div className="hidden md:flex px-3 py-1.5 bg-camerite-main/10 rounded-lg border border-camerite-main/30 items-center gap-2">
-                <Settings className="w-4 h-4 text-camerite-main" />
-                <span className="text-xs text-gray-300">v6.2 - Estável</span>
-             </div>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Toggle de Modo: Loja vs Anual */}
+            <div className="flex items-center gap-2">
+              <div 
+                className="inline-flex items-center p-1 bg-gray-800 border border-gray-700 rounded-lg shadow-inner" 
+                role="group" 
+                aria-label="Modo da proposta"
+              >
+                <button
+                  type="button"
+                  id="toggle-mode-loja"
+                  aria-pressed={mode === 'loja'}
+                  onClick={() => setMode('loja')}
+                  className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition-all ${
+                    mode === 'loja'
+                      ? 'bg-camerite-main text-white shadow-md'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Loja
+                </button>
+                <button
+                  type="button"
+                  id="toggle-mode-anual"
+                  aria-pressed={mode === 'anual'}
+                  onClick={() => setMode('anual')}
+                  className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition-all ${
+                    mode === 'anual'
+                      ? 'bg-camerite-main text-white shadow-md'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Anual
+                </button>
+              </div>
+
+              {mode === 'loja' && (
+                <div className="flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-lg px-2.5 py-1">
+                  <label htmlFor="store-count-input" className="text-xs font-semibold text-gray-300 whitespace-nowrap">
+                    Nº de lojas:
+                  </label>
+                  <input
+                    id="store-count-input"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={storeCount}
+                    onChange={handleStoreCountChange}
+                    onBlur={() => {
+                      if (!storeCount || storeCount < 1) {
+                        setStoreCount(1);
+                      }
+                    }}
+                    className="w-14 bg-gray-900 border border-gray-700 rounded p-1 text-center text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-camerite-main"
+                  />
+                </div>
+              )}
+            </div>
+
+            <button 
+              onClick={handleResetData}
+              id="btn-limpar-dados"
+              className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 flex items-center gap-2 transition-colors text-sm font-medium"
+              title="Limpar todos os dados"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Limpar Dados</span>
+            </button>
+            <div className="hidden lg:flex px-3 py-1.5 bg-camerite-main/10 rounded-lg border border-camerite-main/30 items-center gap-2">
+              <Settings className="w-4 h-4 text-camerite-main" />
+              <span className="text-xs text-gray-300">v6.2 - Estável</span>
+            </div>
           </div>
         </div>
       </header>
